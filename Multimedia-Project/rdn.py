@@ -15,6 +15,15 @@ matplotlib.use('TkAgg')
 root = Tk.Tk()
 root.wm_title('Dynamic Random Plot in TK')
 
+START = False
+
+def _start():
+    global START
+    START = True
+
+def _reset():
+    global START
+    START = False
 
 def _quit():
     root.quit()
@@ -70,17 +79,23 @@ def dynamicPlot():
     timeLabel = Tk.Label(master=root, textvariable=v, font='Verdana 10 bold')
     timeLabel.pack(side=Tk.LEFT, expand=1)
 
-    button1 = Tk.Button(master=root, text='Quit', command=_quit)
+    button0 = Tk.Button(master=root, text='Start', command=_start)
+    button0.pack(side=Tk.LEFT, expand=1)
+
+    button1 = Tk.Button(master=root, text='Reset', command=_reset)
     button1.pack(side=Tk.LEFT, expand=1)
 
-    button2 = Tk.Button(master=root, text='Pause/Continue', command=_pause)
+    button2 = Tk.Button(master=root, text='Quit', command=_quit)
     button2.pack(side=Tk.LEFT, expand=1)
 
-    button3 = Tk.Button(master=root, text='SpeedUp', command=_speedUp)
+    button3 = Tk.Button(master=root, text='Pause/Continue', command=_pause)
     button3.pack(side=Tk.LEFT, expand=1)
 
-    button4 = Tk.Button(master=root, text='SpeedDown', command=_speedDown)
+    button4 = Tk.Button(master=root, text='SpeedUp', command=_speedUp)
     button4.pack(side=Tk.LEFT, expand=1)
+
+    button5 = Tk.Button(master=root, text='SpeedDown', command=_speedDown)
+    button5.pack(side=Tk.LEFT, expand=1)
 
     xdata = np.asarray(list(range(numOfSamples)))
     ydata = np.asarray(data)
@@ -101,7 +116,6 @@ def dynamicPlot():
         else:
             sec_tick = '30'
         t_ticks.append(min_tick + ':' + sec_tick)
-    #t_ticks = list(range(0, len(x_ticks)))
 
     ax.set_xticks(x_ticks)
     ax.set_xticklabels(t_ticks)
@@ -111,24 +125,35 @@ def dynamicPlot():
 
     cnt = 0
     while True:
-        if not PAUSE:
-            time.sleep(0.1)
-
-            xStart += SPEED * n_move
-            xEnd += SPEED * n_move
+        if not START:
+            xStart = 0
+            xEnd = windowLen
+            cnt = 0
             ax.set_xlim(xStart, xEnd)
-
             time_now = xEnd / sampling_rate
-
             v.set('Time: '+str(time_now)+' [sec]')
-
-            cnt += 1
-            if cnt == numOfSamples:
-                break
             fig.canvas.draw()
             fig.canvas.flush_events()
+            fig.canvas.get_tk_widget().update()
+        else:
+            if not PAUSE:
+                time.sleep(0.1)
 
-        fig.canvas.get_tk_widget().update()
+                xStart += SPEED * n_move
+                xEnd += SPEED * n_move
+                ax.set_xlim(xStart, xEnd)
+
+                time_now = xEnd / sampling_rate
+
+                v.set('Time: '+str(time_now)+' [sec]')
+
+                cnt += 1
+                if cnt == numOfSamples:
+                    break
+                fig.canvas.draw()
+                fig.canvas.flush_events()
+
+            fig.canvas.get_tk_widget().update()
 
     Tk.mainloop()
 

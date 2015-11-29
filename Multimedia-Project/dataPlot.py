@@ -76,10 +76,20 @@ class TestDataPlot:
         self.data = []
         for i in range(self.num):
             self.data.append(testDataDict['t'+str(i)])
+        self.START = False
         self.PAUSE = False
         self.SPEED = 1
         self.speedChange = False
         self.ax = []
+
+    def _start(self):
+        self.START = True
+
+    def _reset(self):
+        if self.SPEED != 1:
+            self.speedChange = True
+            self.SPEED = 1
+        self.START = False
 
     def _quit(self):
         root.quit()
@@ -114,7 +124,6 @@ class TestDataPlot:
             else:
                 self.ax[i].spines['top'].set_visible(False)
                 self.ax[i].spines['bottom'].set_visible(False)
-        #ax.patch.set_visible(False)
         fig.patch.set_visible(False)
 
         lines = []
@@ -136,11 +145,17 @@ class TestDataPlot:
         toolbar.update()
         canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 
-        button1 = Tk.Button(master=root, text='Quit', command=self._quit)
+        button0 = Tk.Button(master=root, text='Start', command=self._start)
+        button0.pack(side=Tk.LEFT, expand=1)
+
+        button1 = Tk.Button(master=root, text='Reset', command=self._reset)
         button1.pack(side=Tk.LEFT, expand=1)
 
-        button2 = Tk.Button(master=root, text='Pause/Continue', command=self._pause)
+        button2 = Tk.Button(master=root, text='Quit', command=self._quit)
         button2.pack(side=Tk.LEFT, expand=1)
+
+        button3 = Tk.Button(master=root, text='Pause/Continue', command=self._pause)
+        button3.pack(side=Tk.LEFT, expand=1)
 
         button4 = Tk.Button(master=root, text='Speed Down', command=self._speedDown)
         button4.pack(side=Tk.LEFT, expand=1)
@@ -150,13 +165,14 @@ class TestDataPlot:
         speedLabel.pack(side=Tk.LEFT, expand=1)
         v_speed.set('Speed: '+str(self.SPEED))
 
-        button3 = Tk.Button(master=root, text='Speed Up', command=self._speedUp)
-        button3.pack(side=Tk.LEFT, expand=1)
+        button5 = Tk.Button(master=root, text='Speed Up', command=self._speedUp)
+        button5.pack(side=Tk.LEFT, expand=1)
 
         v_time = Tk.StringVar()
         timeLabel = Tk.Label(master=root, textvariable=v_time, font='Verdana 10 bold')
         timeLabel.pack(side=Tk.LEFT, expand=1)
 
+        ############# initialization ################
         cnt = 0
         n_min = 2
         sampling_rate = 60
@@ -186,14 +202,17 @@ class TestDataPlot:
             self.ax[i].set_xticks([0])
 
         while True:
-            if not self.PAUSE:
-                time.sleep(0.2)
-
-                tStart += n*self.SPEED
-                tEnd += n*self.SPEED
-
+            ######### if not started, looping inside here #################
+            if not self.START:
+                tStart = 0
+                tEnd = windowLen
+                cnt = 0
                 for i in range(self.num):
                     self.ax[i].set_xlim(tStart, tEnd)
+
+                if self.speedChange:
+                    v_speed.set('Speed: '+str(self.SPEED))
+                    self.speedChange = False
 
                 time_now = tEnd / sampling_rate
                 hour_now = time_now / 3600
@@ -201,18 +220,38 @@ class TestDataPlot:
                 sec_now = time_now - hour_now * 3600 - min_now * 60
                 v_time.set('Time: '+str(hour_now).zfill(2)+':'+str(min_now).zfill(2)
                            + ':' + str(sec_now).zfill(2))
-
-                if self.speedChange:
-                    v_speed.set('Speed: '+str(self.SPEED))
-                    self.speedChange = False
-
-                cnt += 1
-                if cnt == frameNum:
-                    break
                 fig.canvas.draw()
                 fig.canvas.flush_events()
+                fig.canvas.get_tk_widget().update()
+            ########## else the program is started #######################
+            else:
+                if not self.PAUSE:
+                    time.sleep(0.2)
 
-            fig.canvas.get_tk_widget().update()
+                    tStart += n*self.SPEED
+                    tEnd += n*self.SPEED
+
+                    for i in range(self.num):
+                        self.ax[i].set_xlim(tStart, tEnd)
+
+                    time_now = tEnd / sampling_rate
+                    hour_now = time_now / 3600
+                    min_now = (time_now - hour_now * 3600) / 60
+                    sec_now = time_now - hour_now * 3600 - min_now * 60
+                    v_time.set('Time: '+str(hour_now).zfill(2)+':'+str(min_now).zfill(2)
+                               + ':' + str(sec_now).zfill(2))
+
+                    if self.speedChange:
+                        v_speed.set('Speed: '+str(self.SPEED))
+                        self.speedChange = False
+
+                    cnt += 1
+                    if cnt == frameNum:
+                        break
+                    fig.canvas.draw()
+                    fig.canvas.flush_events()
+
+                fig.canvas.get_tk_widget().update()
 
         Tk.mainloop()
 
