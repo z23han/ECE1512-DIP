@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import time, sys, matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib import gridspec
 
 
 if sys.version_info[0] < 3:
@@ -53,13 +54,17 @@ def dynamicPlot():
     data = [random.randint(1, 50) for _ in range(numOfSamples)]
     #plt.ion()
     fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.set_ylim(0, 60)
-    #ax = plt.axes(ylim=(0,60))
-    line, = ax.plot([],[],lw=2)
+    gs = gridspec.GridSpec(1, 2, width_ratios=[3, 1])
+    ax0 = fig.add_subplot(gs[0])
+    ax1 = fig.add_subplot(gs[1])
+    ax0.set_ylim(0, 60)
+    line, = ax0.plot([],[],lw=2)
 
-    ax.set_ylim(min(data)-1, max(data)+1)
-    ax.set_ylabel('random data', rotation=0, labelpad=30)
+    ax0.set_ylim(min(data)-1, max(data)+1)
+    ax0.set_ylabel('random data', rotation=0, labelpad=30)
+
+    rect = ax1.bar([1], data[0], width=0.5, align='center')
+    ax1.set_ylim(min(data)-1, max(data)+1)
     #ax.patch.set_visible(False)
     #fig.patch.set_visible(False)
     #ax.spines['top'].set_visible(False)
@@ -117,8 +122,8 @@ def dynamicPlot():
             sec_tick = '30'
         t_ticks.append(min_tick + ':' + sec_tick)
 
-    ax.set_xticks(x_ticks)
-    ax.set_xticklabels(t_ticks)
+    ax0.set_xticks(x_ticks)
+    ax0.set_xticklabels(t_ticks)
 
     xStart = 0
     xEnd = windowLen
@@ -129,7 +134,8 @@ def dynamicPlot():
             xStart = 0
             xEnd = windowLen
             cnt = 0
-            ax.set_xlim(xStart, xEnd)
+            ax0.set_xlim(xStart, xEnd)
+            rect.patches[0].set_height(data[xEnd])
             time_now = xEnd / sampling_rate
             v.set('Time: '+str(time_now)+' [sec]')
             fig.canvas.draw()
@@ -141,7 +147,9 @@ def dynamicPlot():
 
                 xStart += SPEED * n_move
                 xEnd += SPEED * n_move
-                ax.set_xlim(xStart, xEnd)
+                ax0.set_xlim(xStart, xEnd)
+
+                rect.patches[0].set_height(data[xEnd])
 
                 time_now = xEnd / sampling_rate
 

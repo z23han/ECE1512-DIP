@@ -5,6 +5,7 @@ import time
 matplotlib.use('TkAgg')
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib import gridspec
 #from matplotlib.backend_bases import key_press_handler
 #from matplotlib.figure import Figure
 
@@ -90,6 +91,7 @@ class TestDataPlot:
             self.speedChange = True
             self.SPEED = 1
         self.START = False
+        self.PAUSE = False
 
     def _quit(self):
         root.quit()
@@ -112,8 +114,16 @@ class TestDataPlot:
     def tkPlot(self):
 
         fig = plt.figure()
+        # create grid layout
+        gs = gridspec.GridSpec(self.num, 5)
+
+        # every signal is rendered for line plot
         for i in range(self.num):
-            self.ax.append(fig.add_subplot(self.num, 1, i+1))
+            self.ax.append(fig.add_subplot(gs[i,:-1]))
+        # assign the last signal for bar plot
+        self.ax.append(fig.add_subplot(gs[:,-1]))
+
+        # initialize the y_lim and y_label
         for i in range(self.num):
             self.ax[i].set_ylim(min(self.data[i])-1, max(self.data[i])+1)
             self.ax[i].set_ylabel(self.testNames[i], rotation=0, labelpad=40)
@@ -125,6 +135,12 @@ class TestDataPlot:
                 self.ax[i].spines['top'].set_visible(False)
                 self.ax[i].spines['bottom'].set_visible(False)
         fig.patch.set_visible(False)
+
+        # initialize bar chart
+        bar_index = self.num - 1
+        bar_data = self.data[bar_index]
+        rect = self.ax[self.num].bar([1], bar_data[0], width=0.35, align='center')
+        self.ax[self.num].set_ylim(min(bar_data)-1, max(bar_data)+1)
 
         lines = []
         for i in range(self.num):
@@ -209,6 +225,7 @@ class TestDataPlot:
                 cnt = 0
                 for i in range(self.num):
                     self.ax[i].set_xlim(tStart, tEnd)
+                rect.patches[0].set_height(bar_data[tEnd])
 
                 if self.speedChange:
                     v_speed.set('Speed: '+str(self.SPEED))
@@ -231,8 +248,10 @@ class TestDataPlot:
                     tStart += n*self.SPEED
                     tEnd += n*self.SPEED
 
+                    # update the data or axis
                     for i in range(self.num):
                         self.ax[i].set_xlim(tStart, tEnd)
+                    rect.patches[0].set_height(bar_data[tEnd])
 
                     time_now = tEnd / sampling_rate
                     hour_now = time_now / 3600
