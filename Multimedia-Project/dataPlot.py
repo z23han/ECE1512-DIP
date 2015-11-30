@@ -134,6 +134,7 @@ class TestDataPlot:
             else:
                 self.ax[i].spines['top'].set_visible(False)
                 self.ax[i].spines['bottom'].set_visible(False)
+        self.ax[self.num].get_xaxis().set_visible(False)
         fig.patch.set_visible(False)
 
         # initialize bar chart
@@ -174,15 +175,15 @@ class TestDataPlot:
         button3.pack(side=Tk.LEFT, expand=1)
 
         button4 = Tk.Button(master=root, text='Speed Down', command=self._speedDown)
-        button4.pack(side=Tk.LEFT, expand=1)
+        button4.pack(side=Tk.LEFT)
 
         v_speed = Tk.StringVar()
         speedLabel = Tk.Label(master=root, textvariable=v_speed, font='Verdana 10 bold')
-        speedLabel.pack(side=Tk.LEFT, expand=1)
+        speedLabel.pack(side=Tk.LEFT)
         v_speed.set('Speed: '+str(self.SPEED))
 
         button5 = Tk.Button(master=root, text='Speed Up', command=self._speedUp)
-        button5.pack(side=Tk.LEFT, expand=1)
+        button5.pack(side=Tk.LEFT)
 
         v_time = Tk.StringVar()
         timeLabel = Tk.Label(master=root, textvariable=v_time, font='Verdana 10 bold')

@@ -17,6 +17,7 @@ root = Tk.Tk()
 root.wm_title('Dynamic Random Plot in TK')
 
 START = False
+n_min = 2
 
 def _start():
     global START
@@ -49,6 +50,18 @@ def _speedDown():
     else:
         SPEED -= 1
 
+def _getText(e):
+    global n_min
+    s = e.get()
+    try:
+        n_min = int(s)
+        print n_min
+        e.delete(0, 'end')
+    except:
+        e.delete(0, 'end')
+    return
+
+
 def dynamicPlot():
     numOfSamples = 100000
     data = [random.randint(1, 50) for _ in range(numOfSamples)]
@@ -65,6 +78,7 @@ def dynamicPlot():
 
     rect = ax1.bar([1], data[0], width=0.5, align='center')
     ax1.set_ylim(min(data)-1, max(data)+1)
+    ax1.get_xaxis().set_visible(False)
     #ax.patch.set_visible(False)
     #fig.patch.set_visible(False)
     #ax.spines['top'].set_visible(False)
@@ -102,11 +116,16 @@ def dynamicPlot():
     button5 = Tk.Button(master=root, text='SpeedDown', command=_speedDown)
     button5.pack(side=Tk.LEFT, expand=1)
 
+    entry0 = Tk.Entry(master=root)
+    entry0.pack(side=Tk.LEFT)
+
+    button6 = Tk.Button(master=root, text='okay', command=lambda : _getText(entry0))
+    button6.pack(side=Tk.LEFT)
+
     xdata = np.asarray(list(range(numOfSamples)))
     ydata = np.asarray(data)
     line.set_data(xdata, ydata)
 
-    n_min = 2
     sampling_rate = 10
     windowLen = n_min * 60 * sampling_rate
     n_move = int(n_min * 30)

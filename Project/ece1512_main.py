@@ -8,6 +8,7 @@ import time
 import scipy as sci
 import scipy.misc as misc
 import sys
+import cv2
 
 
 '''
@@ -22,7 +23,7 @@ try:
     import Image
 except ImportError:
     print 'PIL not found. You cannot view the image'
-import os
+
 
 from scipy import *
 from scipy.ndimage import *
@@ -37,7 +38,7 @@ def colorImSave(filename, array):
         misc.imsave(filename, imArray)
 
 
-def canny(im, sigma, thresHigh = 50, thresLow = 10, version='edge'):
+def canny(im, sigma, thresHigh = 50, thresLow = 10, version='edge', kernel='sobel'):
     '''
         Takes an input image in the range [0, 1] and generate a gradient image
         with edges marked by 1 pixels.
@@ -53,15 +54,38 @@ def canny(im, sigma, thresHigh = 50, thresLow = 10, version='edge'):
     # fy is the filter for horizontal gradient
     # Please not the vertical direction is positive X
 
-    fx = createFilter([0,  1, 0,
-                       0,  0, 0,
+    if kernel == 'prewitt':
+        fx = createFilter([-1, 0, 1,
+                           -1, 0, 1,
+                           -1, 0, 1])
+        fy = createFilter([-1, -1, -1,
+                           0, 0, 0,
+                           1, 1, 1])
+    elif kernel == 'sobel':
+        fx = createFilter([-1, 0, 1,
+                           -2, 0, 2,
+                           -1, 0, 1])
+        fy = createFilter([-1, -2, -1,
+                           0, 0, 0,
+                           1, 2, 1])
+    elif kernel == 'laplacian':
+        fx = createFilter([0, -1, 0,
+                           -1, 4, 1,
+                           0, -1, 0])
+        fy = createFilter([0, -1, 0,
+                           -1, 4, 1,
+                           0, -1, 0])
+    '''
+    fx = createFilter([0, 1, 0,
+                       0, 0, 0,
                        0, -1, 0])
-    fy = createFilter([ 0, 0, 0,
+
+    fy = createFilter([0, 0, 0,
                        -1, 0, 1,
-                        0, 0, 0])
+                       0, 0, 0])
+    '''
 
     imout = conv(imin, gausskernel, 'valid')
-    # print "imout:", imout.shape
     gradxx = conv(imout, fx, 'valid')
     gradyy = conv(imout, fy, 'valid')
 
@@ -201,7 +225,7 @@ def gaussFilter(sigma, window = 3):
     for x in range(window):
         for y in range(window):
             r = hypot((x-c0),(y-c0))
-            val = (1.0/2*pi*sigma*sigma)*exp(-(r*r)/(2*sigma*sigma))
+            val = (1.0/(2*pi*sigma*sigma))*exp(-(r*r)/(2*sigma*sigma))
             kernel[x,y] = val
     return kernel / kernel.sum()
 
@@ -356,7 +380,7 @@ def paintStroke(canvas, x, y, p0, p1, colour, rad):
 
 # Computing Canny Edges, using the function provided by Vishwanath
 # Use the image intensity suggested by Litwinowicz I(x) = 0.3*R(x) + 0.59*G(x) + 0.11*B(x)
-def cannyEdge(imRGB, sigma, thresHigh=50, thresLow=10, version='edge'):
+def cannyEdge(imRGB, sigma, thresHigh=50, thresLow=10, version='edge', kernel='sobel'):
     im = imRGB.copy()
     intIm = np.zeros(im.shape[0:2])
     pixR = 0.0
@@ -373,11 +397,11 @@ def cannyEdge(imRGB, sigma, thresHigh=50, thresLow=10, version='edge'):
 
     # return thetas within [0, 45, 90, 135]
     if version == 'theta1':
-        thetas = canny(intIm, sigma, thresHigh, thresLow, version='theta1')
+        thetas = canny(intIm, sigma, thresHigh, thresLow, version='theta1', kernel=kernel)
         return thetas
     # return thetas calculated
     elif version == 'theta2':
-        thetas = canny(intIm, sigma, thresHigh, thresLow, version='theta2')
+        thetas = canny(intIm, sigma, thresHigh, thresLow, version='theta2', kernel=kernel)
         return thetas
 
     retgrad = canny(intIm, sigma, thresHigh,thresLow)
@@ -485,11 +509,15 @@ if __name__ == '__main__':
 
     ################# colorPlateNumber = 2 ###################
     # canny edge image
-    cannyImage = cannyEdge(imRGB, sigma=1.0)
+    kernel = 'sobel'
+    thresLow=20
+    thresHigh=40
+
+    cannyImage = cannyEdge(imRGB, thresHigh=thresHigh, thresLow=thresLow, sigma=1.0, version='edge', kernel=kernel)
     if colorPlateNum == 2:
         plt.imshow(cannyImage)
         plt.pause(3)
-        colorImSave('cannyImage.png', cannyImage)
+        colorImSave('edge_'+kernel+'.png', cannyImage)
         sys.exit()
 
     # random number seed
